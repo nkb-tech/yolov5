@@ -1,0 +1,16 @@
+# YOLOv5 requirements
+# Usage: pip install -r requirements.txt
+
+# Base ------------------------------------------------------------------------
+protobuf<=3.20.1  # https://github.com/ultralytics/yolov5/issues/8012
+
+# Logging ---------------------------------------------------------------------
+tensorboard>=2.4.1
+clearml>=1.2.0
+comet
+
+# Extras ----------------------------------------------------------------------
+ipython  # interactive notebook
+mss  # screenshots
+albumentations>=1.0.3
+pycocotools>=2.0.6  # COCO mAP

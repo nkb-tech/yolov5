@@ -7,7 +7,7 @@ FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-runtime
 
 # Downloads to user config dir
 ADD https://ultralytics.com/assets/Arial.ttf https://ultralytics.com/assets/Arial.Unicode.ttf /root/.config/Ultralytics/
-
+RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install linux packages
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt update

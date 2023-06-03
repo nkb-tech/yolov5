@@ -1,0 +1,10 @@
+# YOLOv5 requirements
+# Usage: pip install -r requirements.txt
+
+# Base ------------------------------------------------------------------------
+--extra-index-url https://download.pytorch.org/whl/cu116
+torch==1.13.1+cu116  # see https://pytorch.org/get-started/locally (recommended)
+torchvision==0.14.1+cu116
+
+# Deploy ----------------------------------------------------------------------
+Cython
