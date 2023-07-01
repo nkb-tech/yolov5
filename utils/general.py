@@ -877,7 +877,7 @@ def non_max_suppression(
         prediction = prediction[0]  # select only inference output
 
     device = prediction.device
-    mps = 'mps' in device.type  # Apple MPS
+    mps = 'mps' in device.type  # Apply MPS
     if mps:  # MPS not fully supported yet, convert tensors to CPU before NMS
         prediction = prediction.cpu()
     bs = prediction.shape[0]  # batch size

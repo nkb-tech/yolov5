@@ -11,7 +11,8 @@ ENV TRT_VERSION=8.4.1 \
     CUDA_VERSION=11.6.0 \
     NVIDIA_DRIVER_CAPABILITIES=$NVIDIA_DRIVER_CAPABILITIES,video \
     DEBIAN_FRONTEND=noninteractive \
-    OMP_NUM_THREADS=1
+    OMP_NUM_THREADS=1 \
+    PYDS_VERSION=1.1.4
 SHELL ["/bin/bash", "-c"]
 
 # With DeepStream 6.2, the docker containers do not package libraries necessary for certain multimedia
@@ -26,10 +27,12 @@ ADD https://ultralytics.com/assets/Arial.ttf https://ultralytics.com/assets/Aria
 RUN apt update && \
     TZ=Etc/UTC apt install -y tzdata && \
     apt install --no-install-recommends --yes \
+    apt-get install -y apt-transport-https ca-certificates \
     gcc git zip curl htop libgl1-mesa-glx libglib2.0-0 libpython3-dev gnupg build-essential libopencv-dev \
-    libtool autoconf autogen pkg-config cmake dkms \
-    libssl1.1 \
-    libgstreamer1.0-0 \
+    libtool autoconf autogen automake pkg-config cmake make dkms g++ m4 \
+    libssl1.1 libglib2.0-dev libglib2.0-dev-bin \
+    libgstreamer1.0-dev libgirepository1.0-dev libcairo2-dev \
+    gstreamer1.0-plugins-base \
     gstreamer1.0-tools \
     gstreamer1.0-plugins-good \
     gstreamer1.0-plugins-bad \
@@ -37,7 +40,9 @@ RUN apt update && \
     gstreamer1.0-libav \
     libgstreamer-plugins-base1.0-dev \
     libgstrtspserver-1.0-0 libjansson4 \
-    libyaml-cpp-dev gcc make git python3 python3-dev python3-pip
+    libyaml-cpp-dev \
+    python3.8 python3.8-dev python3-pip python3-gst-1.0 python3-numpy python3-gi python-gi-dev && \
+    update-ca-certificates
 # RUN alias python=python3
 
 # Install TensorRT
@@ -49,6 +54,25 @@ RUN v="${TRT_VERSION}-1+cuda${CUDA_VERSION%.*}" && \
         libnvinfer-dev=${v} libnvonnxparsers-dev=${v} libnvparsers-dev=${v} libnvinfer-plugin-dev=${v} \
         python3-libnvinfer=${v} libnvinfer-samples=${v} && \
     cd /usr/src/tensorrt/samples/trtexec && make
+
+# Install deepstream python bindings (pyds library)
+RUN git clone https://github.com/NVIDIA-AI-IOT/deepstream_python_apps /opt/nvidia/deepstream/deepstream/sources/deepstream_python_apps/ && \
+    cd /opt/nvidia/deepstream/deepstream/sources/deepstream_python_apps/ && \
+    git checkout v${PYDS_VERSION} && \
+    git submodule update --init && \
+    cd /opt/nvidia/deepstream/deepstream/sources/deepstream_python_apps/3rdparty/gst-python/ && \
+    ./autogen.sh && \
+    make -j$(nproc) && \
+    make install && \
+    cd /opt/nvidia/deepstream/deepstream/sources/deepstream_python_apps/bindings && \
+    mkdir build && cd build && \
+    cmake .. \
+        -DPYTHON_MAJOR_VERSION=3 \
+        -DPYTHON_MINOR_VERSION=8 \
+        -DS_VERSION=6.1 \
+        -DPIP_PLATFORM=linux_x86_64 && \
+    make -j$(nproc) && \
+    pip install ./pyds-${PYDS_VERSION}-py3-none*.whl
 
 # Create working directory
 RUN rm -rf /usr/src/app && mkdir -p /usr/src/app
@@ -96,3 +120,5 @@ ENV DEBIAN_FRONTEND=teletype
 
 # GCP VM from Image
 # docker.io/ultralytics/yolov5:latest
+
+gst-launch-1.0 filesrc location=/opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4 ! qtdemux ! h264parse ! nvv4l2decoder ! m.sink_0 nvstreammux name=m width=1920 height=1080 batch-size=1 ! nvinfer config-file-path= /opt/nvidia/deepstream/deepstream/samples/configs/deepstream-app/config_infer_primary.txt ! 'video/x-raw(memory:NVMM), format=(string)NV12' ! fakesink set_mode=0

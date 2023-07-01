@@ -1,6 +1,6 @@
-name: "yolov5s_trt"
-platform: "tensorrt_plan"
-backend: "tensorrt"
+name: "yolov5s_onnx"
+platform: "onnxruntime_onnx"
+backend: "onnxruntime"
 max_batch_size: 0
 input [
     {
@@ -16,3 +16,4 @@ output [
         dims: [1, 25200, 85]
     }
 ]
+
